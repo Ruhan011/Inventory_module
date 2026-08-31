@@ -1,0 +1,134 @@
+{% extends 'base.html' %}
+
+{% block title %}Stock In/Out — Inventory{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1>Record Stock Movement</h1>
+    <a href="{% url 'stock_movement_list' %}" class="btn btn-secondary">Cancel</a>
+</div>
+
+<div class="card">
+    <form method="post" id="movement-form">
+        {% csrf_token %}
+
+        <div class="form-group">
+            <label for="{{ form.product.id_for_label }}">Product <span class="required">*</span></label>
+            {{ form.product }}
+            {% if form.product.errors %}
+                <ul class="errorlist">{% for e in form.product.errors %}<li>{{ e }}</li>{% endfor %}</ul>
+            {% endif %}
+        </div>
+
+        <div class="form-group">
+            <label for="{{ form.warehouse.id_for_label }}">Warehouse <span class="required">*</span></label>
+            {{ form.warehouse }}
+            {% if form.warehouse.errors %}
+                <ul class="errorlist">{% for e in form.warehouse.errors %}<li>{{ e }}</li>{% endfor %}</ul>
+            {% endif %}
+        </div>
+
+        <div class="form-group">
+            <label for="{{ form.movement_type.id_for_label }}">Movement Type <span class="required">*</span></label>
+            {{ form.movement_type }}
+            {% if form.movement_type.errors %}
+                <ul class="errorlist">{% for e in form.movement_type.errors %}<li>{{ e }}</li>{% endfor %}</ul>
+            {% endif %}
+        </div>
+
+        <div class="form-group">
+            <label for="{{ form.quantity.id_for_label }}">Quantity <span class="required">*</span></label>
+            {{ form.quantity }}
+            {% if form.quantity.errors %}
+                <ul class="errorlist">{% for e in form.quantity.errors %}<li>{{ e }}</li>{% endfor %}</ul>
+            {% endif %}
+        </div>
+
+        <div class="form-group">
+            <label for="{{ form.reference_type.id_for_label }}">Reference Type</label>
+            {{ form.reference_type }}
+            {% if form.reference_type.errors %}
+                <ul class="errorlist">{% for e in form.reference_type.errors %}<li>{{ e }}</li>{% endfor %}</ul>
+            {% endif %}
+        </div>
+
+        <div class="form-group">
+            <label for="{{ form.reference_id.id_for_label }}">Reference ID</label>
+            {{ form.reference_id }}
+            {% if form.reference_id.errors %}
+                <ul class="errorlist">{% for e in form.reference_id.errors %}<li>{{ e }}</li>{% endfor %}</ul>
+            {% endif %}
+        </div>
+
+        <div id="batch-fields" style="display: none;">
+            <h3 style="margin-top: 1.5rem; margin-bottom: 0.75rem;">Batch Details</h3>
+            <div class="form-group">
+                <label for="{{ form.batch_number.id_for_label }}">Batch Number <span class="required">*</span></label>
+                {{ form.batch_number }}
+                {% if form.batch_number.errors %}
+                    <ul class="errorlist">{% for e in form.batch_number.errors %}<li>{{ e }}</li>{% endfor %}</ul>
+                {% endif %}
+            </div>
+            <div class="form-group">
+                <label for="{{ form.manufacture_date.id_for_label }}">Manufacture Date <span class="required">*</span></label>
+                {{ form.manufacture_date }}
+                {% if form.manufacture_date.errors %}
+                    <ul class="errorlist">{% for e in form.manufacture_date.errors %}<li>{{ e }}</li>{% endfor %}</ul>
+                {% endif %}
+            </div>
+            <div class="form-group">
+                <label for="{{ form.expiry_date.id_for_label }}">Expiry Date <span class="required">*</span></label>
+                {{ form.expiry_date }}
+                {% if form.expiry_date.errors %}
+                    <ul class="errorlist">{% for e in form.expiry_date.errors %}<li>{{ e }}</li>{% endfor %}</ul>
+                {% endif %}
+            </div>
+        </div>
+
+        <div id="serial-field" style="display: none;">
+            <h3 style="margin-top: 1.5rem; margin-bottom: 0.75rem;">Serial Numbers</h3>
+            <div class="form-group">
+                <label for="{{ form.serial_numbers.id_for_label }}">Serial Numbers <span class="required">*</span></label>
+                {{ form.serial_numbers }}
+                {% if form.serial_numbers.errors %}
+                    <ul class="errorlist">{% for e in form.serial_numbers.errors %}<li>{{ e }}</li>{% endfor %}</ul>
+                {% endif %}
+                <small class="help-text">One serial number per line. Count must match quantity.</small>
+            </div>
+        </div>
+
+        <div class="form-actions">
+            <button type="submit" class="btn btn-primary">Save Movement</button>
+            <a href="{% url 'stock_movement_list' %}" class="btn btn-secondary">Cancel</a>
+        </div>
+    </form>
+</div>
+
+<script>
+(function() {
+    const productSelect = document.getElementById('{{ form.product.id_for_label }}');
+    const movementTypeSelect = document.getElementById('{{ form.movement_type.id_for_label }}');
+    const batchFields = document.getElementById('batch-fields');
+    const serialField = document.getElementById('serial-field');
+
+    function updateVisibility() {
+        if (!productSelect || !movementTypeSelect) return;
+
+        const productOption = productSelect.options[productSelect.selectedIndex];
+        const trackingMode = productOption ? productOption.dataset.tracking : '';
+        const movementType = movementTypeSelect.value;
+
+        const showBatch = movementType === 'PURCHASE_IN' && trackingMode === 'BATCH';
+        const showSerial = movementType === 'PURCHASE_IN' && trackingMode === 'SERIAL';
+
+        if (batchFields) batchFields.style.display = showBatch ? 'block' : 'none';
+        if (serialField) serialField.style.display = showSerial ? 'block' : 'none';
+    }
+
+    if (productSelect) productSelect.addEventListener('change', updateVisibility);
+    if (movementTypeSelect) movementTypeSelect.addEventListener('change', updateVisibility);
+
+    updateVisibility();
+})();
+</script>
+{% endblock %}

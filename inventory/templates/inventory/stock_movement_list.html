@@ -1,0 +1,72 @@
+{% extends 'base.html' %}
+
+{% block title %}Stock Movements — Inventory{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1>Stock Movements</h1>
+    <a href="{% url 'stock_movement_create' %}" class="btn btn-primary">New Movement</a>
+</div>
+
+<div class="card">
+    <form method="get" class="filter-bar">
+        <div class="form-group">
+            <label for="id_warehouse">Warehouse</label>
+            <select name="warehouse" id="id_warehouse">
+                <option value="">All Warehouses</option>
+                {% for wh in warehouses %}
+                    <option value="{{ wh.id }}" {% if wh.id|stringformat:'s' == selected_warehouse %}selected{% endif %}>
+                        {{ wh.name }}
+                    </option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="form-group">
+            <label for="id_movement_type">Movement Type</label>
+            <select name="movement_type" id="id_movement_type">
+                <option value="">All Types</option>
+                {% for value, label in movement_types %}
+                    <option value="{{ value }}" {% if value == selected_movement_type %}selected{% endif %}>
+                        {{ label }}
+                    </option>
+                {% endfor %}
+            </select>
+        </div>
+        <button type="submit" class="btn btn-secondary">Filter</button>
+        {% if selected_warehouse or selected_movement_type %}
+            <a href="{% url 'stock_movement_list' %}" class="btn btn-secondary">Clear</a>
+        {% endif %}
+    </form>
+
+    <div class="table-responsive">
+        <table>
+            <thead>
+                <tr>
+                    <th>Product</th>
+                    <th>Warehouse</th>
+                    <th>Type</th>
+                    <th>Quantity</th>
+                    <th>Date & Time</th>
+                    <th>Reference</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for movement in movements %}
+                    <tr>
+                        <td><a href="{% url 'product_detail' movement.product.pk %}">{{ movement.product.name }} ({{ movement.product.sku }})</a></td>
+                        <td>{{ movement.warehouse.name }}</td>
+                        <td>{{ movement.get_movement_type_display }}</td>
+                        <td>{{ movement.quantity }}</td>
+                        <td>{{ movement.movement_date|date:"Y-m-d H:i" }}</td>
+                        <td>{{ movement.reference_type }}{% if movement.reference_id %} #{{ movement.reference_id }}{% endif %}</td>
+                    </tr>
+                {% empty %}
+                    <tr>
+                        <td colspan="6" style="text-align: center; padding: 2rem;">No movements found.</td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

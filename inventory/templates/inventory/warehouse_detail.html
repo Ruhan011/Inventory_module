@@ -1,0 +1,66 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ warehouse.name }} — Inventory{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1>{{ warehouse.name }}</h1>
+    <a href="{% url 'warehouse_list' %}" class="btn btn-secondary">Back</a>
+</div>
+
+<div class="card">
+    <h2>Warehouse Details</h2>
+    <div class="detail-grid">
+        <div class="detail-item">
+            <div class="label">Name</div>
+            <div class="value">{{ warehouse.name }}</div>
+        </div>
+        <div class="detail-item">
+            <div class="label">Location</div>
+            <div class="value">{{ warehouse.location }}</div>
+        </div>
+        <div class="detail-item">
+            <div class="label">Branch ID</div>
+            <div class="value">{{ warehouse.branch_id }}</div>
+        </div>
+    </div>
+</div>
+
+<div class="card">
+    <h2>Stock at This Warehouse</h2>
+    {% if stock_records %}
+        <div class="table-responsive">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Product</th>
+                        <th>SKU</th>
+                        <th>Quantity</th>
+                        <th>Available Qty</th>
+                        <th>Reserved</th>
+                        {% if stock_records.0.batch %}
+                            <th>Batch</th>
+                        {% endif %}
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for stock in stock_records %}
+                        <tr {% if stock.available_qty <= stock.product.reorder_level and stock.available_qty > 0 %}class="low-stock"{% elif stock.available_qty == 0 %}class="low-stock"{% endif %}>
+                            <td><a href="{% url 'product_detail' stock.product.pk %}">{{ stock.product.name }}</a></td>
+                            <td>{{ stock.product.sku }}</td>
+                            <td>{{ stock.quantity }}</td>
+                            <td>{{ stock.available_qty }}</td>
+                            <td>{{ stock.reserved_qty }}</td>
+                            {% if stock.batch %}
+                                <td>{{ stock.batch.batch_number }}</td>
+                            {% endif %}
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    {% else %}
+        <p class="text-muted">No stock at this warehouse.</p>
+    {% endif %}
+</div>
+{% endblock %}

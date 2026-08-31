@@ -1,0 +1,82 @@
+{% extends 'base.html' %}
+
+{% block title %}Stock Report — Inventory{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1>Stock Report</h1>
+    <span class="text-muted" style="font-size: 0.875rem; margin-right: 1rem;">
+        Generated: {{ generated_at|date:"Y-m-d H:i" }}
+    </span>
+</div>
+
+<div class="card">
+    <h2>Low-Stock Products</h2>
+    {% if low_stock %}
+        <div class="table-responsive">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Product</th>
+                        <th>SKU</th>
+                        <th>Total Available</th>
+                        <th>Reorder Level</th>
+                        <th>Status</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for item in low_stock %}
+                        <tr class="low-stock">
+                            <td>{{ item.product.name }}</td>
+                            <td>{{ item.product.sku }}</td>
+                            <td>{{ item.total_available }}</td>
+                            <td>{{ item.reorder_level }}</td>
+                            <td>
+                                {% if item.total_available == 0 %}
+                                    <span class="badge badge-danger">Out of Stock</span>
+                                {% else %}
+                                    <span class="badge badge-warning">Low Stock</span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    {% else %}
+        <p class="text-muted">No low-stock products.</p>
+    {% endif %}
+</div>
+
+<div class="card">
+    <h2>Batches Expiring Within 30 Days</h2>
+    {% if expiring_batches %}
+        <div class="table-responsive">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Product</th>
+                        <th>SKU</th>
+                        <th>Batch Number</th>
+                        <th>Expiry Date</th>
+                        <th>Days Remaining</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for batch in expiring_batches %}
+                        <tr class="expiring-soon">
+                            <td>{{ batch.product.name }}</td>
+                            <td>{{ batch.product.sku }}</td>
+                            <td>{{ batch.batch_number }}</td>
+                            <td>{{ batch.expiry_date }}</td>
+                            <td>{{ batch.expiry_date|timeuntil }}</td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    {% else %}
+        <p class="text-muted">No batches expiring soon.</p>
+    {% endif %}
+</div>
+{% endblock %}

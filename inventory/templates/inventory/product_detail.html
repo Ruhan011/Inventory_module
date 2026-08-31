@@ -1,0 +1,180 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ product.name }} — Inventory{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1>{{ product.name }}</h1>
+    <div>
+        {% if user.is_superuser or user.groups.filter.name == 'Manager' %}
+            <a href="{% url 'product_update' product.pk %}" class="btn btn-secondary">Edit</a>
+        {% endif %}
+        <a href="{% url 'product_list' %}" class="btn btn-secondary">Back</a>
+    </div>
+</div>
+
+<div class="card">
+    <h2>Product Details</h2>
+    <div class="detail-grid">
+        <div class="detail-item">
+            <div class="label">SKU</div>
+            <div class="value">{{ product.sku }}</div>
+        </div>
+        <div class="detail-item">
+            <div class="label">Barcode</div>
+            <div class="value">{{ product.barcode|default:"—" }}</div>
+        </div>
+        <div class="detail-item">
+            <div class="label">Category</div>
+            <div class="value">{{ product.category.name }}</div>
+        </div>
+        <div class="detail-item">
+            <div class="label">Unit</div>
+            <div class="value">{{ product.unit.name }} ({{ product.unit.symbol }})</div>
+        </div>
+        <div class="detail-item">
+            <div class="label">Cost Price</div>
+            <div class="value">{{ product.cost_price }}</div>
+        </div>
+        <div class="detail-item">
+            <div class="label">Selling Price</div>
+            <div class="value">{{ product.selling_price }}</div>
+        </div>
+        <div class="detail-item">
+            <div class="label">Reorder Level</div>
+            <div class="value">{{ product.reorder_level }}</div>
+        </div>
+        <div class="detail-item">
+            <div class="label">Tracking Mode</div>
+            <div class="value">
+                <span class="badge
+                    {% if product.tracking_mode == 'BATCH' %}badge-batch
+                    {% elif product.tracking_mode == 'SERIAL' %}badge-serial
+                    {% else %}badge-none{% endif %}">
+                    {{ product.get_tracking_mode_display }}
+                </span>
+            </div>
+        </div>
+        <div class="detail-item">
+            <div class="label">Status</div>
+            <div class="value">
+                <span class="badge {% if product.status == 'ACTIVE' %}badge-active{% else %}badge-inactive{% endif %}">
+                    {{ product.status }}
+                </span>
+            </div>
+        </div>
+    </div>
+
+    {% if product.description %}
+        <div class="detail-item" style="grid-column: 1 / -1;">
+            <div class="label">Description</div>
+            <div class="value">{{ product.description }}</div>
+        </div>
+    {% endif %}
+</div>
+
+<div class="card">
+    <h2>Stock by Warehouse</h2>
+    {% if stock_records %}
+        <div class="table-responsive">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Warehouse</th>
+                        <th>Quantity</th>
+                        <th>Available Qty</th>
+                        <th>Reserved</th>
+                        {% if product.tracking_mode == 'BATCH' %}
+                            <th>Batch</th>
+                        {% endif %}
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for stock in stock_records %}
+                        <tr {% if stock.available_qty <= product.reorder_level and stock.available_qty > 0 %}class="low-stock"{% elif stock.available_qty == 0 %}class="low-stock"{% endif %}>
+                            <td>{{ stock.warehouse.name }}</td>
+                            <td>{{ stock.quantity }}</td>
+                            <td>{{ stock.available_qty }}</td>
+                            <td>{{ stock.reserved_qty }}</td>
+                            {% if product.tracking_mode == 'BATCH' %}
+                                <td>{{ stock.batch.batch_number|default:"—" }}</td>
+                            {% endif %}
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    {% else %}
+        <p class="text-muted">No stock records for this product.</p>
+    {% endif %}
+</div>
+
+{% if product.tracking_mode == 'BATCH' and batches %}
+<div class="card">
+    <h2>Batches</h2>
+    <div class="table-responsive">
+        <table>
+            <thead>
+                <tr>
+                    <th>Batch Number</th>
+                    <th>Manufacture Date</th>
+                    <th>Expiry Date</th>
+                    <th>Status</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for batch in batches %}
+                    <tr {% if batch.is_expiring_soon %}class="expiring-soon"{% endif %}>
+                        <td>{{ batch.batch_number }}</td>
+                        <td>{{ batch.manufacture_date }}</td>
+                        <td>{{ batch.expiry_date|default:"—" }}</td>
+                        <td>
+                            {% if batch.is_expiring_soon %}
+                                <span class="badge badge-warning">Expiring Soon</span>
+                            {% elif batch.expiry_date %}
+                                <span class="badge badge-active">Valid</span>
+                            {% else %}
+                                <span class="badge badge-none">No Expiry</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endif %}
+
+{% if product.tracking_mode == 'SERIAL' and serials %}
+<div class="card">
+    <h2>Serial Numbers</h2>
+    <div class="table-responsive">
+        <table>
+            <thead>
+                <tr>
+                    <th>Serial Number</th>
+                    <th>Warehouse</th>
+                    <th>Status</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for serial in serials %}
+                    <tr>
+                        <td>{{ serial.serial_number }}</td>
+                        <td>{{ serial.warehouse.name|default:"—" }}</td>
+                        <td>
+                            <span class="badge
+                                {% if serial.status == 'IN_STOCK' %}badge-active
+                                {% elif serial.status == 'SOLD' %}badge-inactive
+                                {% else %}badge-warning{% endif %}">
+                                {{ serial.status }}
+                            </span>
+                        </td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endif %}
+{% endblock %}

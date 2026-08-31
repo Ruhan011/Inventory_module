@@ -1,0 +1,60 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Inventory Management{% endblock %}</title>
+    <link rel="stylesheet" href="{% static 'inventory/style.css' %}">
+</head>
+<body>
+    <nav class="navbar">
+        <div class="navbar-brand">
+            <a href="{% url 'dashboard' %}">📦 Inventory</a>
+        </div>
+        <ul class="navbar-nav">
+            {% if user.is_superuser or user.groups.all|length > 0 %}
+                <li><a href="{% url 'dashboard' %}">Dashboard</a></li>
+                {% if not user.groups.filter.name == 'Clerk' %}
+                <li><a href="{% url 'product_list' %}">Products</a></li>
+                {% endif %}
+                <li><a href="{% url 'warehouse_list' %}">Warehouses</a></li>
+                <li><a href="{% url 'stock_movement_list' %}">Movements</a></li>
+                <li><a href="{% url 'stock_movement_create' %}">Stock In/Out</a></li>
+                {% if user.is_superuser or user.groups.filter.name == 'Manager' %}
+                <li><a href="{% url 'stock_report' %}">Reports</a></li>
+                {% endif %}
+            {% endif %}
+            {% if user.is_authenticated %}
+                <li class="user-info">
+                    <span>👤 {{ user.username }}
+                        {% if user.is_superuser %}(Admin)
+                        {% elif user.groups.filter.name == 'Manager' %}(Manager)
+                        {% elif user.groups.filter.name == 'Clerk' %}(Clerk)
+                        {% endif %}
+                    </span>
+                    <a href="{% url 'logout' %}" class="btn btn-secondary btn-sm">Logout</a>
+                </li>
+            {% else %}
+                <li><a href="{% url 'login' %}" class="btn btn-secondary">Login</a></li>
+            {% endif %}
+        </ul>
+    </nav>
+
+    <main class="container">
+        {% if messages %}
+            <div class="messages">
+                {% for message in messages %}
+                    <div class="alert alert-{{ message.tags }}">{{ message }}</div>
+                {% endfor %}
+            </div>
+        {% endif %}
+
+        {% block content %}{% endblock %}
+    </main>
+
+    <footer class="footer">
+        <p>Inventory Management Module — Demo</p>
+    </footer>
+</body>
+</html>

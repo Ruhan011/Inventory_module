@@ -1,0 +1,91 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Dashboard — Inventory{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1>Dashboard</h1>
+</div>
+
+<div class="stats-grid">
+    <div class="stat-card">
+        <div class="label">Low-Stock Products</div>
+        <div class="value {% if low_stock_products %}warning{% endif %}">{{ low_stock_products|length }}</div>
+    </div>
+    <div class="stat-card">
+        <div class="label">Expiring Batches (30 days)</div>
+        <div class="value {% if expiring_batches %}warning{% endif %}">{{ expiring_batches|length }}</div>
+    </div>
+    <div class="stat-card">
+        <div class="label">Total Active Products</div>
+        <div class="value">{{ total_products|default:0 }}</div>
+    </div>
+    <div class="stat-card">
+        <div class="label">Total Warehouses</div>
+        <div class="value">{{ total_warehouses|default:0 }}</div>
+    </div>
+</div>
+
+<div class="card">
+    <h2>Low-Stock Products</h2>
+    {% if low_stock_products %}
+        <div class="table-responsive">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Product</th>
+                        <th>SKU</th>
+                        <th>Warehouse</th>
+                        <th>Available Qty</th>
+                        <th>Reorder Level</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for item in low_stock_products %}
+                        <tr class="low-stock">
+                            <td>{{ item.product.name }}</td>
+                            <td>{{ item.product.sku }}</td>
+                            <td>{{ item.warehouse|default:"—" }}</td>
+                            <td>{{ item.total_available }}</td>
+                            <td>{{ item.reorder_level }}</td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    {% else %}
+        <p class="text-muted">No low-stock products.</p>
+    {% endif %}
+</div>
+
+<div class="card">
+    <h2>Batches Expiring Within 30 Days</h2>
+    {% if expiring_batches %}
+        <div class="table-responsive">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Product</th>
+                        <th>Batch Number</th>
+                        <th>Expiry Date</th>
+                        <th>Days Remaining</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for batch in expiring_batches %}
+                        <tr class="expiring-soon">
+                            <td>{{ batch.product.name }} ({{ batch.product.sku }})</td>
+                            <td>{{ batch.batch_number }}</td>
+                            <td>{{ batch.expiry_date }}</td>
+                            <td>{{ batch.expiry_date|timeuntil }}</td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    {% else %}
+        <p class="text-muted">No batches expiring soon.</p>
+    {% endif %}
+</div>
+{% endblock %}

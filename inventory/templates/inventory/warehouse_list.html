@@ -1,0 +1,40 @@
+{% extends 'base.html' %}
+
+{% block title %}Warehouses — Inventory{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1>Warehouses</h1>
+</div>
+
+<div class="card">
+    <div class="table-responsive">
+        <table>
+            <thead>
+                <tr>
+                    <th>Name</th>
+                    <th>Location</th>
+                    <th>Branch ID</th>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for warehouse in warehouses %}
+                    <tr>
+                        <td><a href="{% url 'warehouse_detail' warehouse.pk %}">{{ warehouse.name }}</a></td>
+                        <td>{{ warehouse.location }}</td>
+                        <td>{{ warehouse.branch_id }}</td>
+                        <td>
+                            <a href="{% url 'warehouse_detail' warehouse.pk %}" class="btn btn-sm btn-secondary">View</a>
+                        </td>
+                    </tr>
+                {% empty %}
+                    <tr>
+                        <td colspan="4" style="text-align: center; padding: 2rem;">No warehouses found.</td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}
