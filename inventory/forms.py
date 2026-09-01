@@ -30,7 +30,7 @@ class ProductForm(forms.ModelForm):
 
 class StockMovementForm(forms.Form):
     product = forms.ModelChoiceField(queryset=Product.objects.filter(status=Product.STATUS_ACTIVE))
-    warehouse = forms.ModelChoiceField(queryset=Stock.objects.none())
+    warehouse = forms.ModelChoiceField(queryset=Warehouse.objects.all())
     movement_type = forms.ChoiceField(choices=StockMovement.MOVEMENT_CHOICES)
     quantity = forms.IntegerField(min_value=1)
     reference_type = forms.CharField(max_length=50, required=False, initial='MANUAL')
@@ -43,7 +43,7 @@ class StockMovementForm(forms.Form):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.fields['warehouse'].queryset = Stock.objects.none()
+        self.fields['warehouse'].queryset = Warehouse.objects.all()
 
         # Attach data-tracking attribute to each product option so the JS
         # can toggle batch/serial fields dynamically without breaking
@@ -57,30 +57,6 @@ class StockMovementForm(forms.Form):
             attrs=self.fields['product'].widget.attrs,
             choices=self.fields['product'].choices,
         )
-
-        product_id = None
-        if 'product' in self.data:
-            try:
-                product_id = int(self.data.get('product'))
-            except (ValueError, TypeError):
-                pass
-        elif self.initial.get('product'):
-            product_id = self.initial['product'].id if hasattr(self.initial['product'], 'id') else self.initial['product']
-
-        movement_type = self.data.get('movement_type') or self.initial.get('movement_type')
-        depleting_types = [
-            StockMovement.MOVEMENT_SALES_OUT,
-            StockMovement.MOVEMENT_DAMAGE_LOSS,
-            StockMovement.MOVEMENT_TRANSFER,
-        ]
-
-        if product_id:
-            if movement_type in depleting_types:
-                self.fields['warehouse'].queryset = Warehouse.objects.filter(
-                    stock_records__product_id=product_id
-                ).distinct()
-            else:
-                self.fields['warehouse'].queryset = Warehouse.objects.all()
 
     def clean(self):
         cleaned_data = super().clean()

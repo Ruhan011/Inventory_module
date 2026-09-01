@@ -20,7 +20,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # See https://docs.djangoproject.com/en/6.1/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-plvh!y*cj&0k$b%^md4o*1uq7e##0du1$ny%8a)!(7w1$k4=**'
+SECRET_KEY = 'mo)vgczfctx@_t5*^f3+-x6$(t%yz69l)gpchl%9oja2=pmfp@'
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
@@ -120,13 +120,3 @@ LOGOUT_REDIRECT_URL = 'login'
 # https://docs.djangoproject.com/en/6.1/howto/static-files/
 
 STATIC_URL = 'static/'
-
-
-# Email
-# https://docs.djangoproject.com/en/6.1/topics/email/#topic-email-configuration
-
-MAILERS = {
-    'default': {
-        'BACKEND': 'django.core.mail.backends.console.EmailBackend',
-    },
-}

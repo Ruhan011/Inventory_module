@@ -84,10 +84,10 @@ class Command(BaseCommand):
 
     def _create_units(self):
         units = {}
-        for name, symbol in [('pcs', 'pcs'), ('kg', 'kg'), ('box', 'box')]:
+        for name, symbol in [('pcs', 'pcs'), ('kg', 'kg'), ('box', 'box'), ('pack', 'pk')]:
             unit, _ = Unit.objects.get_or_create(name=name, symbol=symbol)
             units[name] = unit
-        self.stdout.write('  Units: pcs, kg, box')
+        self.stdout.write('  Units: pcs, kg, box, pack')
         return units
 
     def _create_warehouses(self):
@@ -143,12 +143,92 @@ class Command(BaseCommand):
                 'tracking_mode': Product.TRACKING_NONE,
                 'status': Product.STATUS_ACTIVE,
             },
+            {
+                'sku': 'BASMATIRICE5KG',
+                'barcode': '0000000009012',
+                'name': 'Basmati Rice 5kg',
+                'description': 'Premium aged basmati rice, 5kg bag',
+                'category': categories['Food/Groceries'],
+                'unit': units['kg'],
+                'cost_price': '850.00',
+                'selling_price': '1100.00',
+                'reorder_level': 25,
+                'tracking_mode': Product.TRACKING_BATCH,
+                'status': Product.STATUS_ACTIVE,
+            },
+            {
+                'sku': 'FRESHMILLK1L',
+                'barcode': '0000000009013',
+                'name': 'Fresh Milk 1L',
+                'description': 'Pasteurized fresh milk, 1L carton',
+                'category': categories['Food/Groceries'],
+                'unit': units['pcs'],
+                'cost_price': '90.00',
+                'selling_price': '120.00',
+                'reorder_level': 30,
+                'tracking_mode': Product.TRACKING_BATCH,
+                'status': Product.STATUS_ACTIVE,
+            },
+            {
+                'sku': 'SAMSUNG55TV',
+                'barcode': '0000000009014',
+                'name': 'Samsung 55" TV',
+                'description': 'Samsung 55 inch 4K Smart TV',
+                'category': categories['Electronics'],
+                'unit': units['pcs'],
+                'cost_price': '78000.00',
+                'selling_price': '92000.00',
+                'reorder_level': 3,
+                'tracking_mode': Product.TRACKING_SERIAL,
+                'status': Product.STATUS_ACTIVE,
+            },
+            {
+                'sku': 'WIRELESSMOUSE',
+                'barcode': '0000000009015',
+                'name': 'Wireless Mouse',
+                'description': '2.4GHz wireless optical mouse',
+                'category': categories['Electronics'],
+                'unit': units['pcs'],
+                'cost_price': '450.00',
+                'selling_price': '750.00',
+                'reorder_level': 12,
+                'tracking_mode': Product.TRACKING_NONE,
+                'status': Product.STATUS_ACTIVE,
+            },
+            {
+                'sku': 'NOTEBOOKPACK',
+                'barcode': '0000000009016',
+                'name': 'Notebook Pack',
+                'description': 'A5 notebook, pack of 10',
+                'category': categories['Office Supplies'],
+                'unit': units['pack'],
+                'cost_price': '320.00',
+                'selling_price': '500.00',
+                'reorder_level': 20,
+                'tracking_mode': Product.TRACKING_NONE,
+                'status': Product.STATUS_ACTIVE,
+            },
+            {
+                'sku': 'OFFICECHAIR',
+                'barcode': '0000000009017',
+                'name': 'Office Chair',
+                'description': 'Ergonomic mesh office chair',
+                'category': categories['Office Supplies'],
+                'unit': units['pcs'],
+                'cost_price': '6500.00',
+                'selling_price': '9500.00',
+                'reorder_level': 5,
+                'tracking_mode': Product.TRACKING_SERIAL,
+                'status': Product.STATUS_ACTIVE,
+            },
         ]
         products = {}
         for data in products_data:
             prod, _ = Product.objects.get_or_create(sku=data['sku'], defaults=data)
             products[data['sku']] = prod
-        self.stdout.write('  Products: iPhone 15 Pro (SERIAL), Greek Yogurt (BATCH), A4 Paper Box (NONE)')
+        self.stdout.write('  Products: iPhone 15 Pro (SERIAL), Greek Yogurt (BATCH), A4 Paper Box (NONE), '
+                          'Basmati Rice 5kg (BATCH), Fresh Milk 1L (BATCH), Samsung 55" TV (SERIAL), '
+                          'Wireless Mouse (NONE), Notebook Pack (NONE), Office Chair (SERIAL)')
         return products
 
     def _create_stock_and_movements(self, products, warehouses):
@@ -161,6 +241,12 @@ class Command(BaseCommand):
         iphone = products['IPHONE15PRO']
         yogurt = products['GREEKYOGURT']
         paper = products['A4PAPERBOX']
+        rice = products['BASMATIRICE5KG']
+        milk = products['FRESHMILLK1L']
+        tv = products['SAMSUNG55TV']
+        mouse = products['WIRELESSMOUSE']
+        notebook = products['NOTEBOOKPACK']
+        chair = products['OFFICECHAIR']
 
         # SERIAL product: one Stock row per warehouse (batch=None), serials created separately
         serials_created = 0
@@ -287,6 +373,189 @@ class Command(BaseCommand):
             defaults={'quantity': 30, 'reserved_qty': 0}
         )
         self.stdout.write('  A4 Paper Box: 100 units Central, 30 units Retail (no batch/serial)')
+
+        # ---- BATCH: Basmati Rice 5kg ----
+        rice_batch, rice_batch_created = ProductBatch.objects.get_or_create(
+            product=rice,
+            batch_number='RICE-BATCH-2026-001',
+            defaults={
+                'manufacture_date': today - timedelta(days=10),
+                'expiry_date': today + timedelta(days=90),
+            }
+        )
+        if rice_batch_created:
+            self.stdout.write(f'  Basmati Rice 5kg: batch {rice_batch.batch_number} created (expiry {rice_batch.expiry_date})')
+        StockMovement.objects.get_or_create(
+            product=rice,
+            warehouse=central,
+            batch=rice_batch,
+            movement_type=StockMovement.MOVEMENT_PURCHASE_IN,
+            quantity=60,
+            reference_type=ref_type,
+            reference_id=ref_id,
+        )
+        Stock.objects.get_or_create(
+            product=rice,
+            warehouse=central,
+            batch=rice_batch,
+            defaults={'quantity': 60, 'reserved_qty': 0}
+        )
+        self.stdout.write('  Basmati Rice 5kg: 60 units (5kg bags) at Central Warehouse (batch tracked)')
+
+        # ---- BATCH: Fresh Milk 1L (short expiry ~5 days, trips expiring/low-stock alerts) ----
+        milk_batch, milk_batch_created = ProductBatch.objects.get_or_create(
+            product=milk,
+            batch_number='MILK-BATCH-2026-001',
+            defaults={
+                'manufacture_date': today - timedelta(days=1),
+                'expiry_date': today + timedelta(days=5),
+            }
+        )
+        if milk_batch_created:
+            self.stdout.write(f'  Fresh Milk 1L: batch {milk_batch.batch_number} created (expiry {milk_batch.expiry_date})')
+        StockMovement.objects.get_or_create(
+            product=milk,
+            warehouse=retail,
+            batch=milk_batch,
+            movement_type=StockMovement.MOVEMENT_PURCHASE_IN,
+            quantity=12,
+            reference_type=ref_type,
+            reference_id=ref_id,
+        )
+        Stock.objects.get_or_create(
+            product=milk,
+            warehouse=retail,
+            batch=milk_batch,
+            defaults={'quantity': 12, 'reserved_qty': 0}
+        )
+        self.stdout.write('  Fresh Milk 1L: 12 units at Retail Store A (batch tracked, expiring soon)')
+
+        # ---- SERIAL: Samsung 55" TV ----
+        for wh in [central, retail]:
+            Stock.objects.get_or_create(
+                product=tv,
+                warehouse=wh,
+                defaults={'quantity': 0, 'reserved_qty': 0}
+            )
+        tv_central = 0
+        tv_retail = 0
+        for i in range(1, 3):
+            _, created = ProductSerial.objects.get_or_create(
+                serial_number=f'SAMSUNG55TV-SN{i:04d}',
+                defaults={'product': tv, 'warehouse': central, 'status': ProductSerial.STATUS_IN_STOCK}
+            )
+            if created:
+                tv_central += 1
+                StockMovement.objects.create(
+                    product=tv, warehouse=central,
+                    movement_type=StockMovement.MOVEMENT_PURCHASE_IN, quantity=1,
+                    reference_type=ref_type, reference_id=ref_id,
+                )
+        for i in range(3, 5):
+            _, created = ProductSerial.objects.get_or_create(
+                serial_number=f'SAMSUNG55TV-SN{i:04d}',
+                defaults={'product': tv, 'warehouse': retail, 'status': ProductSerial.STATUS_IN_STOCK}
+            )
+            if created:
+                tv_retail += 1
+                StockMovement.objects.create(
+                    product=tv, warehouse=retail,
+                    movement_type=StockMovement.MOVEMENT_PURCHASE_IN, quantity=1,
+                    reference_type=ref_type, reference_id=ref_id,
+                )
+        if tv_central > 0:
+            s = Stock.objects.get(product=tv, warehouse=central, batch=None)
+            s.quantity += tv_central
+            s.save()
+        if tv_retail > 0:
+            s = Stock.objects.get(product=tv, warehouse=retail, batch=None)
+            s.quantity += tv_retail
+            s.save()
+        self.stdout.write(f'  Samsung 55" TV: {tv_central + tv_retail} serials created ({tv_central} Central, {tv_retail} Retail)')
+
+        # ---- SERIAL: Office Chair ----
+        for wh in [central]:
+            Stock.objects.get_or_create(
+                product=chair,
+                warehouse=wh,
+                defaults={'quantity': 0, 'reserved_qty': 0}
+            )
+        chair_central = 0
+        for i in range(1, 7):
+            _, created = ProductSerial.objects.get_or_create(
+                serial_number=f'OFFICECHAIR-SN{i:04d}',
+                defaults={'product': chair, 'warehouse': central, 'status': ProductSerial.STATUS_IN_STOCK}
+            )
+            if created:
+                chair_central += 1
+                StockMovement.objects.create(
+                    product=chair, warehouse=central,
+                    movement_type=StockMovement.MOVEMENT_PURCHASE_IN, quantity=1,
+                    reference_type=ref_type, reference_id=ref_id,
+                )
+        if chair_central > 0:
+            s = Stock.objects.get(product=chair, warehouse=central, batch=None)
+            s.quantity += chair_central
+            s.save()
+        self.stdout.write(f'  Office Chair: {chair_central} serials created (Central Warehouse)')
+
+        # ---- NONE: Wireless Mouse ----
+        StockMovement.objects.get_or_create(
+            product=mouse,
+            warehouse=central,
+            movement_type=StockMovement.MOVEMENT_PURCHASE_IN,
+            quantity=40,
+            reference_type=ref_type,
+            reference_id=ref_id,
+        )
+        Stock.objects.get_or_create(
+            product=mouse,
+            warehouse=central,
+            defaults={'quantity': 40, 'reserved_qty': 0}
+        )
+        StockMovement.objects.get_or_create(
+            product=mouse,
+            warehouse=retail,
+            movement_type=StockMovement.MOVEMENT_PURCHASE_IN,
+            quantity=15,
+            reference_type=ref_type,
+            reference_id=ref_id,
+        )
+        Stock.objects.get_or_create(
+            product=mouse,
+            warehouse=retail,
+            defaults={'quantity': 15, 'reserved_qty': 0}
+        )
+        self.stdout.write('  Wireless Mouse: 40 units Central, 15 units Retail (no batch/serial)')
+
+        # ---- NONE: Notebook Pack ----
+        StockMovement.objects.get_or_create(
+            product=notebook,
+            warehouse=central,
+            movement_type=StockMovement.MOVEMENT_PURCHASE_IN,
+            quantity=25,
+            reference_type=ref_type,
+            reference_id=ref_id,
+        )
+        Stock.objects.get_or_create(
+            product=notebook,
+            warehouse=central,
+            defaults={'quantity': 25, 'reserved_qty': 0}
+        )
+        StockMovement.objects.get_or_create(
+            product=notebook,
+            warehouse=retail,
+            movement_type=StockMovement.MOVEMENT_PURCHASE_IN,
+            quantity=10,
+            reference_type=ref_type,
+            reference_id=ref_id,
+        )
+        Stock.objects.get_or_create(
+            product=notebook,
+            warehouse=retail,
+            defaults={'quantity': 10, 'reserved_qty': 0}
+        )
+        self.stdout.write('  Notebook Pack: 25 units Central, 10 units Retail (no batch/serial)')
 
         self.stdout.write('')
         self.stdout.write(self.style.NOTICE('Summary:'))
